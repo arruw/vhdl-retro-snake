@@ -29,22 +29,50 @@ entity retro_snake is
 end retro_snake;
 
 architecture Behavioral of retro_snake is
+    type direction_t is ( none, left, up, right, down );
+    type state_t is ( idle, head, tail );
+
+    constant left_c : std_logic_vector (7 downto 0) := x"6b";
+    constant up_c : std_logic_vector (7 downto 0) := x"75";
+    constant right_c : std_logic_vector (7 downto 0) := x"74";
+    constant down_c : std_logic_vector (7 downto 0) := x"72";
+
+    signal state : state_t := idle;
+    signal next_state : state_t;
+    signal direction : direction_t := none;
+
+    signal head_address_curr : integer range 0 to 29 := 15;
+    signal head_offset_curr  : integer range 0 to 79 := 20;
+
+    signal head_address_prev : integer range 0 to 29;
+    signal head_offset_prev  : integer range 0 to 79;
+
+    signal tail_address : integer range 0 to 29;
+    signal tail_offset  : integer range 0 to 79;
+
+    signal food_address : integer range 0 to 29;
+    signal food_offset  : integer range 0 to 79;
+
     -- VGA
     signal color : std_logic_vector (7 downto 0);
     signal column : integer range 0 to 639;
     signal row : integer range 0 to 479;
 
     -- Canvas 
-    signal read_address, write_address : integer range 0 to 29;
-    signal read_data, write_data : std_logic_vector (0 to 79);
     signal write_enable : std_logic;
+    signal write_address : integer range 0 to 29;
+    signal write_data : std_logic_vector (0 to 79);
+    signal read_address0 : integer range 0 to 29;
+    signal read_data0 : std_logic_vector (0 to 79);
+    signal read_address1 : integer range 0 to 29;
+    signal read_data1 : std_logic_vector (0 to 79);
 
     -- PS2
     signal kbd_scancode : std_logic_vector (7 downto 0);
     signal kbd_scancode_ready : std_logic;
     
     -- Seven Segment Display
-    signal number : std_logic_vector (15 downto 0);
+    signal score : std_logic_vector (15 downto 0);
 
     component vga_core is
         port (
@@ -63,8 +91,10 @@ architecture Behavioral of retro_snake is
             write_enable_i : in std_logic;
             write_data_i : in std_logic_vector (0 to 79);
             write_address_i : in integer range 0 to 29;
-            read_address_i : in integer range 0 to 29;
-            read_data_o : out std_logic_vector (0 to 79)
+            read_address0_i : in integer range 0 to 29;
+            read_address1_i : in integer range 0 to 29;
+            read_data0_o : out std_logic_vector (0 to 79);
+            read_data1_o : out std_logic_vector (0 to 79)
         );
     end component;
 
@@ -92,7 +122,50 @@ begin
 
     read_address <= row / 16;
 
-    set_color : process( read_data, column )
+    sync_state : process( clk_i )
+    begin
+        if rising_edge( clk_i ) then
+            if reset_i = '1' then
+                state <= idle;
+            else
+                state <= next_state;
+            end if ;
+        end if ;
+    end process ; -- sync_state
+
+    next_state : process( state )
+    begin
+        case ( state ) is
+            when idle => next_state <= head;
+            when head => next_state <= tail;
+            when tail => next_state <= idle;
+            when others => next_state <= idle;
+        end case ;
+    end process ; -- next_state
+
+    exec_state : process( state )
+    begin
+        case( state ) is
+            when idle =>
+                write_enable <= '0';
+            when head =>
+                head_address_prev <= head_address_curr;
+                head_offset_prev <= head_offset_curr;
+                head_address_curr <= 
+                head_offset_curr <=
+
+                write_address <= head_address_curr;
+                write_data <= 
+                write_enable <= '1';
+            when tail => 
+                
+                write_enable <= '1';
+            when others =>
+                write_enable <= '0';
+        end case ;
+    end process ; -- exec_state
+
+    set_color : process( read_data0, column )
         variable block_type : std_logic_vector (0 to 1);
         variable column_index : integer range 0 to 79;
     begin
@@ -108,12 +181,18 @@ begin
         end case ;
     end process ; -- set_color
 
-    set_number : process( kbd_scancode_ready )
+    set_direction : process( kbd_scancode_ready )
     begin
         if rising_edge( kbd_scancode_ready ) then
-            number <= "00000000" & kbd_scancode;
+            case( kbd_scancode ) is
+                when left_c => direction <= left_c;
+                when up_c => direction <= up_c;
+                when right_c => direction <= right_c;
+                when down_c => direction <= down_c;
+                when others => direction <= direction;
+            end case ;
         end if ;
-    end process ; -- set_number
+    end process ; -- set_direction
 
     vga: vga_core
     port map (
@@ -133,8 +212,10 @@ begin
         write_enable_i => write_enable,
         write_data_i => write_data,
         write_address_i => write_address,
-        read_address_i => read_address,
-        read_data_o => read_data
+        read_address0_i => read_address0,
+        read_address1_i => read_address1,
+        read_data0_o => read_data0
+        read_data1_o => read_data1
     );
 
     ps2: ps2_core
@@ -151,7 +232,7 @@ begin
     port map (
         clk_i => clk_i,
         reset_i => reset_i,
-        number_i => number,
+        number_i => score,
         cathode_o => cathode_o,
         anode_o => anode_o
     );
