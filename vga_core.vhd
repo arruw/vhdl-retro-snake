@@ -12,9 +12,11 @@ use ieee.std_logic_unsigned.all;
 
 entity vga_core is
     port (
-        clk_i, reset_i : in std_logic;
+        clk_i : in std_logic;
+        reset_i : in std_logic;
         color_i : in std_logic_vector (7 downto 0);
-        h_sync_o, v_sync_o : out std_logic;
+        h_sync_o : out std_logic;
+        v_sync_o : out std_logic;
         color_o : out std_logic_vector (7 downto 0);
         column_o : out integer range 0 to 639;
         row_o : out integer range 0 to 479

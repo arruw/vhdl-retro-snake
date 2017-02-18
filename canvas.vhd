@@ -13,13 +13,22 @@ use ieee.std_logic_unsigned.all;
 entity canvas is
     port (
         clk_i : in std_logic;
+        reset_i : in std_logic;
         write_enable_i : in std_logic;
         write_data_i : in std_logic_vector (0 to 79);
         write_address_i : in integer range 0 to 29;
-        read_address0_i : in integer range 0 to 29;
-        read_address1_i : in integer range 0 to 29;
-        read_data0_o : out std_logic_vector (0 to 79);
-        read_data1_o : out std_logic_vector (0 to 79)
+
+        read_address_screen_i : in integer range 0 to 29;
+        read_data_screen_o : out std_logic_vector (0 to 79);
+
+        read_address_head_i : in integer range 0 to 29;
+        read_data_head_o : out std_logic_vector (0 to 79);
+
+        read_address_tail_i : in integer range 0 to 29;
+        read_data_tail_o : out std_logic_vector (0 to 79);
+
+        read_address_food_i : in integer range 0 to 29;
+        read_data_food_o : out std_logic_vector (0 to 79)
     );
 end canvas;
 
@@ -68,7 +77,9 @@ begin
         end if ;
     end process ; -- set
 
-    read_data0_o <= canvas_data(read_address0_i);
-    read_data1_o <= canvas_data(read_address1_i);
+    read_data_screen_o <= canvas_data(read_address_screen_i);
+    read_data_head_o <= canvas_data(read_address_head_i);
+    read_data_tail_o <= canvas_data(read_address_tail_i);
+    read_data_food_o <= canvas_data(read_address_food_i);
 
 end Behavioral;
