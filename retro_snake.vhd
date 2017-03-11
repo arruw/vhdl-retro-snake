@@ -86,6 +86,22 @@ architecture Behavioral of retro_snake is
             anode_o : out std_logic_vector(3 downto 0)
         );
     end component;
+	 
+    component snake is
+        port(
+            clk_i : in std_logic;
+            reset_i : in std_logic;
+            kbd_clk_i : in std_logic;
+            kbd_data_i : in std_logic;
+
+            read_data_head_i : in std_logic_vector (0 to 79);
+            read_address_head_o : out integer range 0 to 29;
+
+            write_enable_head_o : out std_logic;
+            write_data_head_o : out std_logic_vector (0 to 79);
+            write_address_head_o : out integer range 0 to 29
+        );
+    end component;
 begin
 
     c: canvas
@@ -124,4 +140,19 @@ begin
         anode_o => anode_o
     );
 
+
+    snk: snake
+    port map (
+        clk_i => clk_i,
+        reset_i => reset_i,
+        kbd_clk_i => kbd_clk_i,
+        kbd_data_i => kbd_data_i,
+
+        read_data_head_i => read_data_head,
+        read_address_head_o => read_address_head,
+
+        write_enable_head_o => write_enable_head,
+        write_data_head_o => write_data_head,
+        write_address_head_o => write_address_head
+    );
 end Behavioral;
