@@ -11,18 +11,20 @@ use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 use work.common.all;
 
-entity direction_controller is
+entity direction_queue_core is
     port(
         clk_i : in std_logic;
         reset_i : in std_logic;
         kbd_clk_i : in std_logic;
         kbd_data_i : in std_logic;
-        direction_o : out std_logic_vector (3 downto 0)
+        push_enable_i : in std_logic;
+        direction_queue_o : out std_logic_vector (399 downto 0)
     );
-end direction_controller;
+end direction_queue_core;
 
-architecture Behavioral of direction_controller is
-    signal direction : std_logic_vector (3 downto 0) := "0000";
+architecture Behavioral of direction_queue_core is
+    signal direction : std_logic_vector (3 downto 0) := (others => '0');
+    signal direction_queue : std_logic_vector (399 downto 0) := (others => '0'); 
 
     constant left_c : std_logic_vector (7 downto 0) := x"6b";
     constant up_c : std_logic_vector (7 downto 0) := x"75";
@@ -44,26 +46,40 @@ architecture Behavioral of direction_controller is
     end component;
 begin
 
-    direction_o <= direction;
+    direction_queue_o <= direction_queue;
 
     set_direction : process( clk_i )
     begin
         if rising_edge( clk_i ) then
             if reset_i = '1' then
-                direction <= "0000";
+                direction <= (others => '0');
             elsif kbd_scancode_ready = '1' then
                 case( kbd_scancode ) is
-                    when left_c => direction <= "1000";
-                    when up_c => direction <= "0100";
-                    when right_c => direction <= "0010";
-                    when down_c => direction <= "0001";
-                    when others => direction <= direction;           
+                    when left_c     => direction <= "1000";
+                    when up_c       => direction <= "0100";
+                    when right_c    => direction <= "0010";
+                    when down_c     => direction <= "0001";
+                    when others     => direction <= direction;           
                 end case ;
             else
                 direction <= direction;
             end if ;
         end if ;
     end process ; -- set_direction
+
+    -- TODO - validate moves [LEFT, RIGHT] is invalid, only 3 directions are valid at once)
+    fill_direction_queue : process( clk_i )
+    begin
+        if rising_edge( clk_i ) then
+            if reset_i = '1' then
+                direction_queue <= (others => '0');
+            elsif push_enable_i = '1' then
+                direction_queue <= direction & direction_queue(399 downto 4);
+            else
+                direction_queue <= direction_queue;
+            end if ;
+        end if ;
+    end process ; -- fill_direction_queue
 
     ps2: ps2_core
     port map (

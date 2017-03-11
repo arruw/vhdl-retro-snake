@@ -23,7 +23,7 @@ end ssd_core;
 architecture Behavioral of ssd_core is
     signal cathode : std_logic_vector (6 downto 0);
     signal anode : std_logic_vector (3 downto 0);
-    signal anode_enable : std_logic;
+    signal clk_1kHz : std_logic;
 
     component prescaler is
         generic (
@@ -42,17 +42,17 @@ begin
 
     p: prescaler
     generic map (
-        value =>50000  -- 1ms
+        value => 50000  -- 1ms
     )
     port map(
         clk_i => clk_i,
         reset_i => reset_i,
-        enable_o => anode_enable
+        enable_o => clk_1kHz
     );
 
-    set_anode : process( anode_enable )
+    set_anode : process( clk_1kHz )
     begin
-        if rising_edge( anode_enable ) then
+        if rising_edge( clk_1kHz ) then
             case anode is
                 when "1110" => anode <= "1101";
                 when "1101" => anode <= "1011";
