@@ -24,8 +24,8 @@ end direction_queue_core;
 
 architecture Behavioral of direction_queue_core is
     signal direction : std_logic_vector (3 downto 0) := (others => '0');
-    signal direction_queue : std_logic_vector (399 downto 0) := (others => '0'); 
-    signal direction_queue_helper : std_logic_vector (399 downto 0) := (others => '0'); 
+    signal direction_queue : std_logic_vector (399 downto 0) := (399 => '1', 395 => '1', others => '0'); 
+    signal direction_queue_helper : std_logic_vector (399 downto 0) := (399 => '1', 395 => '1', others => '0'); 
 
     constant left_c : std_logic_vector (7 downto 0) := x"6b";
     constant up_c : std_logic_vector (7 downto 0) := x"75";

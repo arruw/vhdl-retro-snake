@@ -15,22 +15,28 @@ entity canvas is
         clk_i : in std_logic;
         reset_i : in std_logic;
 
-        write_enable_head_i : in std_logic;
-        write_data_head_i : in std_logic_vector (0 to 79);
-        write_address_head_i : in integer range 0 to 29;
+        write_enable_i : in std_logic;
+        write_data_i : in std_logic_vector (0 to 79);
+        write_address_i : in integer range 0 to 29;
 
         read_address_screen_i : in integer range 0 to 29;
         read_data_screen_o : out std_logic_vector (0 to 79);
 
         read_address_head_i : in integer range 0 to 29;
-        read_data_head_o : out std_logic_vector (0 to 79)
+        read_data_head_o : out std_logic_vector (0 to 79);
+
+        read_address_next_head_i : in integer range 0 to 29;
+        read_data_next_head_o : out std_logic_vector (0 to 79);
+
+        read_address_tail_i : in integer range 0 to 29;
+        read_data_tail_o : out std_logic_vector (0 to 79)
     );
 end canvas;
 
 architecture Behavioral of canvas is
     -- x       | y  | block_t
     -- 20 (40) | 15 | HEAD
-    -- 21 (42) | 15 | TAIL      <--- no tail
+    -- 22 (44) | 15 | TAIL
     type canvas_t is array (0 to 29) of std_logic_vector (0 to 79);
     signal canvas_data : canvas_t := (
         "00000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -48,7 +54,7 @@ architecture Behavioral of canvas is
         "00000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "00000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "00000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        "00000000000000000000000000000000000000000100000000000000000000000000000000000000",
+        "00000000000000000000000000000000000000000110100000000000000000000000000000000000",
         "00000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "00000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "00000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -66,16 +72,18 @@ architecture Behavioral of canvas is
     );
 begin
 
-    write_head : process( clk_i )
+    write : process( clk_i )
     begin
         if rising_edge( clk_i ) then
-            if write_enable_head_i = '1' then
-                canvas_data(write_address_head_i) <= write_data_head_i;
+            if write_enable_i = '1' then
+                canvas_data(write_address_i) <= write_data_i;
             end if ;
         end if ;
-    end process ; -- write_head
+    end process ; -- write
 
     read_data_screen_o <= canvas_data(read_address_screen_i);
     read_data_head_o <= canvas_data(read_address_head_i);
+	read_data_next_head_o <= canvas_data(read_address_next_head_i);
+	read_data_tail_o <= canvas_data(read_address_tail_i);
 
 end Behavioral;

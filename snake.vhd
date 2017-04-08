@@ -21,21 +21,40 @@ entity snake is
         read_data_head_i : in std_logic_vector (0 to 79);
         read_address_head_o : out integer range 0 to 29;
 
-        write_enable_head_o : out std_logic;
-        write_data_head_o : out std_logic_vector (0 to 79);
-        write_address_head_o : out integer range 0 to 29
+        read_data_next_head_i : in std_logic_vector (0 to 79);
+        read_address_next_head_o : out integer range 0 to 29;
+
+        read_data_tail_i : in std_logic_vector (0 to 79);
+        read_address_tail_o : out integer range 0 to 29;
+
+        write_enable_o : out std_logic;
+        write_data_o : out std_logic_vector (0 to 79);
+        write_address_o : out integer range 0 to 29
     );
 end snake;
 
 architecture Behavioral of snake is
-    -- type state_t is (IDLE, READ_HEAD, MOVE_HEAD);
-    -- signal state, next_state : state_t;
+    type state_t is (
+        MOVE_HEAD, MOVE_HEAD_WRITE_WAIT,
+        MOVE_NECK, MOVE_NECK_WRITE_WAIT,
+        MOVE_TAIL, MOVE_TAIL_WRITE_WAIT
+    );
+    signal state : state_t := MOVE_HEAD;
 
     signal clk_1Hz : std_logic;
 	signal direction_queue : std_logic_vector (399 downto 0);
-	 
+	signal length : integer := 3;
+
     signal head_direction : std_logic_vector (3 downto 0);
+    signal tail_direction : std_logic_vector (3 downto 0);
+
     signal head_address : block_address_t := (15, 40);
+    signal head_data : std_logic_vector (0 to 79);
+    
+    signal next_tail_address : block_address_t;
+    signal tail_address : block_address_t := (15, 44);
+    signal tail_data : std_logic_vector (0 to 79);
+
     signal next_head_address : block_address_t;
     signal next_head_data : std_logic_vector (0 to 79);
     signal next_head_address_block : std_logic_vector(1 downto 0);
@@ -64,68 +83,79 @@ architecture Behavioral of snake is
 begin
 
     head_direction <= direction_queue(399 downto 396);
-    next_head_address <= get_next_block_address(head_address, head_direction);
-    read_address_head_o <= next_head_address.address;
-    identifier : process( read_data_head_i, next_head_address.offset )
-    begin
-        next_head_address_block <= read_data_head_i(next_head_address.offset to next_head_address.offset + 1);
-        next_head_data <= read_data_head_i;  
-        next_head_data(next_head_address.offset to next_head_address.offset + 1) <= "01";
-    end process ; -- identifier
+    tail_direction <= direction_queue((399 - length * 4) downto (396 - length * 4));
 
-    move_head : process( clk_i )
-        -- variable next_data_head : std_logic_vector (0 to 79) := read_data_head_i;
+    next_head_address <= get_next_block_address(head_address, head_direction);
+    next_tail_address <= get_next_block_address(tail_address, tail_direction);
+    
+    read_address_next_head_o <= next_head_address.address;
+    next_head_address_block <= read_data_next_head_i(next_head_address.offset to next_head_address.offset + 1);
+    set_next_head_data : process( read_data_next_head_i, next_head_address.offset )
+    begin
+        next_head_data <= read_data_next_head_i;  
+        next_head_data(next_head_address.offset to next_head_address.offset + 1) <= "01";
+    end process ; -- set_next_head_data
+
+    read_address_head_o <= head_address.address;
+    set_head_data : process( read_data_head_i, head_address.offset )
+    begin
+        head_data <= read_data_head_i;  
+        head_data(head_address.offset to head_address.offset + 1) <= "10";
+    end process ; -- set_head_data
+
+    read_address_tail_o <= tail_address.address;
+    set_tail_data : process( read_data_tail_i, tail_address.offset )
+    begin
+        tail_data <= read_data_tail_i;  
+        tail_data(tail_address.offset to tail_address.offset + 1) <= "11";
+    end process ; -- set_tail_data
+
+    process( clk_i )
     begin
         if rising_edge( clk_i ) then
-            if clk_1Hz = '1' and head_direction /= "0000" then
-                --- next_data_head(next_head_address.offset to next_head_address.offset + 1) := "01";
-                write_address_head_o <= next_head_address.address;
-                -- write_data_head_o <= next_data_head;
-                write_data_head_o <= next_head_data;
-                write_enable_head_o <= '1';
+            if state = MOVE_HEAD and clk_1Hz = '1' and head_direction /= "0000" then
+                -- move head to next position
+                write_address_o <= next_head_address.address;
+                write_data_o <= next_head_data;
+                write_enable_o <= '1';
+                state <= MOVE_HEAD_WRITE_WAIT;
+
+            elsif state = MOVE_HEAD_WRITE_WAIT then
+                write_enable_o <= '0';
+                state <= MOVE_NECK;
+
+            elsif state = MOVE_NECK then
+                -- move neck to prev head position
+                write_address_o <= head_address.address;
+                write_data_o <= head_data;
+                write_enable_o <= '1';
+                -- move head pointer
                 head_address <= next_head_address;
+                state <= MOVE_NECK_WRITE_WAIT;
+
+            elsif state = MOVE_NECK_WRITE_WAIT then
+                write_enable_o <= '0';
+                state <= MOVE_TAIL;
+
+            elsif state = MOVE_TAIL then
+                -- clear tail
+                write_address_o <= tail_address.address;
+                write_data_o <= tail_data;
+                write_enable_o <= '1';
+                -- move tail pointer
+                tail_address <= next_tail_address;
+                state <= MOVE_TAIL_WRITE_WAIT;
+
+            elsif state = MOVE_TAIL_WRITE_WAIT then
+                write_enable_o <= '0';
+                state <= MOVE_HEAD;
+            
             else
-                write_enable_head_o <= '0';
-            end if ;
+                write_enable_o <= '0';
+                state <= state;
+            end if;
         end if ;
-    end process ; -- move_head
-
-    -- sync_state : process( clk_i )
-    -- begin
-    --     if rising_edge( clk_i ) then
-    --         if reset_i = '1' then
-    --             state <= IDLE;
-    --             head_address <= (15, 40);
-    --         else
-    --             state <= next_state;
-    --         end if ;
-    --     end if ;
-    -- end process ; -- sync_state
-
-    -- set_next_state : process( state, clk_1Hz )
-    -- begin
-    --     case( state ) is
-    --         when IDLE =>  
-    --             if clk_1Hz = '1' then
-    --                 next_state <= READ_HEAD;
-    --             else                 
-    --                 next_state <= IDLE;
-    --             end if ;
-    --         when READ_HEAD => next_state <= MOVE_HEAD;
-    --         when MOVE_HEAD => next_state <= IDLE;
-    --         when others => next_state <= IDLE;
-    --     end case ;
-    -- end process ; -- set_next_state
-
-    -- state_logic : process( state )
-    -- begin
-    --     case( state ) is
-    --         when READ_HEAD =>
-    --             read_address_head_o
-    --         when MOVE_HEAD => next_state <= IDLE;
-    --         when others => next_state <= IDLE;
-    --     end case ;
-    -- end process ; -- state_logic
+    end process ;
 
     p: prescaler
     generic map (

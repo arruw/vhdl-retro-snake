@@ -32,15 +32,21 @@ end retro_snake;
 architecture Behavioral of retro_snake is
     
     -- Canvas 
-    signal write_enable_head : std_logic;
-    signal write_address_head : integer range 0 to 29;
-    signal write_data_head : std_logic_vector (0 to 79);
+    signal write_enable : std_logic;
+    signal write_address : integer range 0 to 29;
+    signal write_data : std_logic_vector (0 to 79);
 
     signal read_address_screen : integer range 0 to 29;
     signal read_data_screen : std_logic_vector (0 to 79);
 
     signal read_address_head : integer range 0 to 29;
     signal read_data_head : std_logic_vector (0 to 79);
+
+    signal read_address_next_head : integer range 0 to 29;
+    signal read_data_next_head : std_logic_vector (0 to 79);
+
+    signal read_address_tail : integer range 0 to 29;
+    signal read_data_tail : std_logic_vector (0 to 79);
 
     -- Seven Segment Display
     signal score : std_logic_vector (15 downto 0);
@@ -53,15 +59,21 @@ architecture Behavioral of retro_snake is
             clk_i : in std_logic;
             reset_i : in std_logic;
 
-            write_enable_head_i : in std_logic;
-            write_data_head_i : in std_logic_vector (0 to 79);
-            write_address_head_i : in integer range 0 to 29;
+            write_enable_i : in std_logic;
+            write_data_i : in std_logic_vector (0 to 79);
+            write_address_i : in integer range 0 to 29;
 
             read_address_screen_i : in integer range 0 to 29;
             read_data_screen_o : out std_logic_vector (0 to 79);
 
             read_address_head_i : in integer range 0 to 29;
-            read_data_head_o : out std_logic_vector (0 to 79)
+            read_data_head_o : out std_logic_vector (0 to 79);
+
+            read_address_next_head_i : in integer range 0 to 29;
+            read_data_next_head_o : out std_logic_vector (0 to 79);
+
+            read_address_tail_i : in integer range 0 to 29;
+            read_data_tail_o : out std_logic_vector (0 to 79)
         );
     end component;
 
@@ -97,9 +109,15 @@ architecture Behavioral of retro_snake is
             read_data_head_i : in std_logic_vector (0 to 79);
             read_address_head_o : out integer range 0 to 29;
 
-            write_enable_head_o : out std_logic;
-            write_data_head_o : out std_logic_vector (0 to 79);
-            write_address_head_o : out integer range 0 to 29
+            read_data_next_head_i : in std_logic_vector (0 to 79);
+            read_address_next_head_o : out integer range 0 to 29;
+
+            read_data_tail_i : in std_logic_vector (0 to 79);
+            read_address_tail_o : out integer range 0 to 29;
+
+            write_enable_o : out std_logic;
+            write_data_o : out std_logic_vector (0 to 79);
+            write_address_o : out integer range 0 to 29
         );
     end component;
 begin
@@ -109,15 +127,21 @@ begin
         clk_i => clk_i,
         reset_i => reset_i,
 
-        write_enable_head_i => write_enable_head,
-        write_data_head_i => write_data_head,
-        write_address_head_i => write_address_head,
+        write_enable_i => write_enable,
+        write_data_i => write_data,
+        write_address_i => write_address,
 
         read_address_screen_i => read_address_screen,
         read_data_screen_o => read_data_screen,
 
         read_address_head_i => read_address_head,
-        read_data_head_o => read_data_head
+        read_data_head_o => read_data_head,
+
+        read_address_next_head_i => read_address_next_head,
+        read_data_next_head_o => read_data_next_head,
+
+        read_address_tail_i => read_address_tail,
+        read_data_tail_o => read_data_tail
     );
 
     scr: screen
@@ -140,7 +164,6 @@ begin
         anode_o => anode_o
     );
 
-
     snk: snake
     port map (
         clk_i => clk_i,
@@ -151,8 +174,14 @@ begin
         read_data_head_i => read_data_head,
         read_address_head_o => read_address_head,
 
-        write_enable_head_o => write_enable_head,
-        write_data_head_o => write_data_head,
-        write_address_head_o => write_address_head
+        read_data_next_head_i => read_data_next_head,
+        read_address_next_head_o => read_address_next_head,
+
+        read_data_tail_i => read_data_tail,
+        read_address_tail_o => read_address_tail,
+
+        write_enable_o => write_enable,
+        write_data_o => write_data,
+        write_address_o => write_address
     );
 end Behavioral;
