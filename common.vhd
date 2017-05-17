@@ -17,9 +17,9 @@ package common is
         signal curr_block_address : in block_address_t;
         signal direction : in std_logic_vector (3 downto 0)) return block_address_t;
 
-    function get_prev_block_address(
-        signal curr_block_address : in block_address_t;
-        signal direction : in std_logic_vector (3 downto 0)) return block_address_t;
+--  function get_prev_block_address(
+--      signal curr_block_address : in block_address_t;
+--      signal direction : in std_logic_vector (3 downto 0)) return block_address_t;
 
 -- type <new_type> is
 --  record
@@ -63,32 +63,45 @@ package body common is
             when others =>
                 next_block_address := curr_block_address;
         end case ;
+
+        if curr_block_address.address = 29 and next_block_address.address > 29 then
+            next_block_address.address := 0;
+        elsif curr_block_address.address = 0 and next_block_address.address > 29 then
+            next_block_address.address := 29;
+        end if;
+
+        if curr_block_address.offset = 78 and next_block_address.offset > 78 then
+            next_block_address.offset := 0;
+        elsif curr_block_address.offset = 0 and next_block_address.offset > 78 then
+            next_block_address.offset := 78;
+        end if;
+
         return next_block_address;
     end get_next_block_address;
 
-    function get_prev_block_address(
-        signal curr_block_address : in block_address_t;
-        signal direction : in std_logic_vector (3 downto 0)) return block_address_t is
-        variable prev_block_address : block_address_t;
-    begin
-        case( direction ) is
-            when "1000" =>
-                prev_block_address.address := curr_block_address.address;
-                prev_block_address.offset := curr_block_address.offset + 2;
-            when "0010" =>
-                prev_block_address.address := curr_block_address.address;
-                prev_block_address.offset := curr_block_address.offset - 2;
-            when "0100" =>
-                prev_block_address.address := curr_block_address.address + 1;
-                prev_block_address.offset := curr_block_address.offset;
-            when "0001" =>
-                prev_block_address.address := curr_block_address.address - 1;
-                prev_block_address.offset := curr_block_address.offset;
-            when others =>
-                prev_block_address := curr_block_address;
-        end case ;
-        return prev_block_address;
-    end get_prev_block_address;
+--    function get_prev_block_address(
+--        signal curr_block_address : in block_address_t;
+--        signal direction : in std_logic_vector (3 downto 0)) return block_address_t is
+--        variable prev_block_address : block_address_t;
+--    begin
+--        case( direction ) is
+--            when "1000" =>
+--                prev_block_address.address := curr_block_address.address;
+--                prev_block_address.offset := curr_block_address.offset + 2;
+--            when "0010" =>
+--                prev_block_address.address := curr_block_address.address;
+--                prev_block_address.offset := curr_block_address.offset - 2;
+--            when "0100" =>
+--                prev_block_address.address := curr_block_address.address + 1;
+--                prev_block_address.offset := curr_block_address.offset;
+--            when "0001" =>
+--                prev_block_address.address := curr_block_address.address - 1;
+--                prev_block_address.offset := curr_block_address.offset;
+--            when others =>
+--                prev_block_address := curr_block_address;
+--        end case ;
+--        return prev_block_address;
+--    end get_prev_block_address;
 
 ---- Example 1
 --  function <function_name>  (signal <signal_name> : in <type_declaration>  ) return <type_declaration> is

@@ -18,14 +18,24 @@ entity direction_queue_core is
         kbd_clk_i : in std_logic;
         kbd_data_i : in std_logic;
         push_enable_i : in std_logic;
-        direction_queue_o : out std_logic_vector (399 downto 0)
+        direction_queue_o : out std_logic_vector (39 downto 0)
     );
 end direction_queue_core;
 
 architecture Behavioral of direction_queue_core is
-    signal direction : std_logic_vector (3 downto 0) := (others => '0');
-    signal direction_queue : std_logic_vector (399 downto 0) := (399 => '1', 395 => '1', 391 => '1', 387 => '1', others => '0'); 
-    -- signal direction_queue_helper : std_logic_vector (399 downto 0) := (399 => '1', 395 => '1', 391 => '1', 387 => '1', others => '0'); 
+    signal direction : std_logic_vector (3 downto 0) := "1000"; --(others => '0');
+    signal direction_queue : std_logic_vector (39 downto 0) := (
+        39 => '1',
+        35 => '1',
+        31 => '1',
+        27 => '1',
+        23 => '1',
+        19 => '1',
+        15 => '1',
+        11 => '1',
+        7 => '1',
+        3 => '1',
+        others => '0');
 
     constant left_c : std_logic_vector (7 downto 0) := x"6b";
     constant up_c : std_logic_vector (7 downto 0) := x"75";
@@ -61,7 +71,7 @@ begin
                     when up_c       => direction <= "0100";
                     when right_c    => direction <= "0010";
                     when down_c     => direction <= "0001";
-                    when esc_c      => direction <= "0000";
+                    --when esc_c      => direction <= "0000";
                     when others     => direction <= direction;
                 end case ;
             else
@@ -77,7 +87,7 @@ begin
             if reset_i = '1' then
                 direction_queue <= (others => '0');
             elsif push_enable_i = '1' then
-                direction_queue <= direction & direction_queue(399 downto 4);
+                direction_queue <= direction & direction_queue(39 downto 4);
                 --direction_queue_helper <= direction & direction_queue(399 downto 4);
             else
                 direction_queue <= direction_queue;
