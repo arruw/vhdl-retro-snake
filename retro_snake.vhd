@@ -48,6 +48,9 @@ architecture Behavioral of retro_snake is
     signal read_address_tail : integer range 0 to 29;
     signal read_data_tail : std_logic_vector (0 to 79);
 
+	 signal read_address_food : integer range 0 to 29;
+    signal read_data_food : std_logic_vector (0 to 79);
+
     -- Seven Segment Display
     signal score : std_logic_vector (15 downto 0);
 
@@ -73,7 +76,10 @@ architecture Behavioral of retro_snake is
             read_data_next_head_o : out std_logic_vector (0 to 79);
 
             read_address_tail_i : in integer range 0 to 29;
-            read_data_tail_o : out std_logic_vector (0 to 79)
+            read_data_tail_o : out std_logic_vector (0 to 79);
+
+            read_address_food_i : in integer range 0 to 29;
+            read_data_food_o : out std_logic_vector (0 to 79)
         );
     end component;
 
@@ -115,9 +121,14 @@ architecture Behavioral of retro_snake is
             read_data_tail_i : in std_logic_vector (0 to 79);
             read_address_tail_o : out integer range 0 to 29;
 
+            read_data_food_i : in std_logic_vector (0 to 79);
+            read_address_food_o : out integer range 0 to 29;
+
             write_enable_o : out std_logic;
             write_data_o : out std_logic_vector (0 to 79);
-            write_address_o : out integer range 0 to 29
+            write_address_o : out integer range 0 to 29;
+
+            score_o : out std_logic_vector (15 downto 0)
         );
     end component;
 begin
@@ -141,7 +152,10 @@ begin
         read_data_next_head_o => read_data_next_head,
 
         read_address_tail_i => read_address_tail,
-        read_data_tail_o => read_data_tail
+        read_data_tail_o => read_data_tail,
+
+        read_address_food_i => read_address_food,
+        read_data_food_o => read_data_food
     );
 
     scr: screen
@@ -180,8 +194,13 @@ begin
         read_data_tail_i => read_data_tail,
         read_address_tail_o => read_address_tail,
 
+        read_data_food_i => read_data_food,
+        read_address_food_o => read_address_food,
+
         write_enable_o => write_enable,
         write_data_o => write_data,
-        write_address_o => write_address
+        write_address_o => write_address,
+
+        score_o => score
     );
 end Behavioral;

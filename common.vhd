@@ -17,6 +17,12 @@ package common is
         signal curr_block_address : in block_address_t;
         signal direction : in std_logic_vector (3 downto 0)) return block_address_t;
 
+    -- function get_increment_block_address(
+    --     signal block_address : in block_address_t) return block_address_t;
+
+    function get_increment_block_address(
+        signal block_address : in block_address_t) return block_address_t;
+
 --  function get_prev_block_address(
 --      signal curr_block_address : in block_address_t;
 --      signal direction : in std_logic_vector (3 downto 0)) return block_address_t;
@@ -78,6 +84,29 @@ package body common is
 
         return next_block_address;
     end get_next_block_address;
+
+    function get_increment_block_address(
+        signal block_address : in block_address_t) return block_address_t is
+        variable increment_block_address : block_address_t;
+    begin
+        increment_block_address.address := block_address.address + 1;
+        increment_block_address.offset := block_address.offset + 2;
+
+
+        if block_address.address = 29 and increment_block_address.address > 29 then
+            increment_block_address.address := 0;
+        elsif block_address.address = 0 and increment_block_address.address > 29 then
+            increment_block_address.address := 29;
+        end if;
+
+        if block_address.offset = 78 and increment_block_address.offset > 78 then
+            increment_block_address.offset := 0;
+        elsif block_address.offset = 0 and increment_block_address.offset > 78 then
+            increment_block_address.offset := 78;
+        end if;
+
+        return increment_block_address;
+    end get_increment_block_address;
 
 --    function get_prev_block_address(
 --        signal curr_block_address : in block_address_t;
