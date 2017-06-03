@@ -253,7 +253,7 @@ begin
 
     p: prescaler
     generic map (
-        value => 12500000 -- 0.25s
+        value => 6250000 -- 0.125s
     )
     port map (
         clk_i => clk_i,
